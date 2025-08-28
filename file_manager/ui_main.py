@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QToolBar, QAction, QFileSystemModel, QTreeView, QListView
+    QToolBar, QAction, QFileSystemModel, QTreeView, QListView, QTextEdit
 )
 from PyQt5.QtCore import Qt
 
@@ -38,24 +38,52 @@ class MainWindow(QMainWindow):
 
         self.folder_view = QTreeView()
         self.folder_view.setModel(self.folder_model)
+        self.folder_view.setRootIndex(self.folder_model.index(''))
         self.folder_view.setColumnWidth(0, 250)
         self.folder_view.setHeaderHidden(True)
 
         # File view
         self.file_model = QFileSystemModel()
         self.file_model.setRootPath('')
+
         self.file_view = QListView()
         self.file_view.setModel(self.file_model)
 
+        # Metadata preview
+        self.preview = QTextEdit()
+        self.preview.setReadOnly(True)
+        self.preview.setMinimumWidth(300)
+
         layout.addWidget(self.folder_view, 1)
         layout.addWidget(self.file_view, 2)
+        layout.addWidget(self.preview, 1)
 
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
     def _connect_signals(self):
         self.folder_view.clicked.connect(self.on_folder_clicked)
+        self.file_view.clicked.connect(self.on_file_clicked)
     
     def on_folder_clicked(self, index):
         folder_path = self.folder_model.filePath(index)
         self.file_view.setRootIndex(self.file_model.index(folder_path))
+    
+    def on_file_clicked(self, index):
+        file_path = self.file_model.filePath(index)
+        file_info = self.file_model.fileInfo(index)
+
+        name = file_info.fileName()
+        size = file_info.size()
+        last_modified = file_info.lastModified().toString('yyyy-MM-dd hh:mm:ss')
+        file_type = 'Folder' if file_info.isDir() else 'File'
+
+        preview_text = (
+            f"Name: {name}\n"
+            f"Type: {file_type}\n"
+            f"Size: {size} bytes\n"
+            f"Last Modified: {last_modified}\n"
+            f"Path: {file_path}\n"
+        )
+
+        self.preview.setText(preview_text)
