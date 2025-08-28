@@ -13,6 +13,7 @@ class MainWindow(QMainWindow):
 
         self._create_toolbar()
         self._create_main_layout()
+        self._connect_signals()
 
     def _create_toolbar(self):
         toolbar = QToolBar("Main Toolbar")
@@ -41,10 +42,20 @@ class MainWindow(QMainWindow):
         self.folder_view.setHeaderHidden(True)
 
         # File view
+        self.file_model = QFileSystemModel()
+        self.file_model.setRootPath('')
         self.file_view = QListView()
+        self.file_view.setModel(self.file_model)
 
         layout.addWidget(self.folder_view, 1)
         layout.addWidget(self.file_view, 2)
 
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
+
+    def _connect_signals(self):
+        self.folder_view.clicked.connect(self.on_folder_clicked)
+    
+    def on_folder_clicked(self, index):
+        folder_path = self.folder_model.filePath(index)
+        self.file_view.setRootIndex(self.file_model.index(folder_path))
