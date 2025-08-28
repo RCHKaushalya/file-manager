@@ -3,6 +3,21 @@ from PyQt5.QtWidgets import (
     QToolBar, QAction, QFileSystemModel, QTreeView, QListView, QTextEdit
 )
 from PyQt5.QtCore import Qt
+import shutil
+
+class FolderTreeView(QTreeView):
+    def dropEvent(self, event):
+        source_index = self.model().index(event.source().currentIndex().row(), 0)
+        source_path = self.model().filePath(source_index)
+
+        target_index = self.indexAt(event.pos())
+        target_path = self.model().filePath(target_index)
+
+        if source_path and target_path:
+            try:
+                shutil.move(source_path, target_path)
+            except Exception as e:
+                print(f"Error moving file: {e}")
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -36,11 +51,13 @@ class MainWindow(QMainWindow):
         self.folder_model = QFileSystemModel()
         self.folder_model.setRootPath('')
 
-        self.folder_view = QTreeView()
+        self.folder_view = FolderTreeView()
         self.folder_view.setModel(self.folder_model)
         self.folder_view.setRootIndex(self.folder_model.index(''))
         self.folder_view.setColumnWidth(0, 250)
         self.folder_view.setHeaderHidden(True)
+        self.folder_view.setAcceptDrops(True)  
+        self.folder_view.setDragDropMode(self.folder_view.DropOnly)
 
         # File view
         self.file_model = QFileSystemModel()
@@ -48,6 +65,8 @@ class MainWindow(QMainWindow):
 
         self.file_view = QListView()
         self.file_view.setModel(self.file_model)
+        self.file_view.setDragEnabled(True)
+        self.file_view.setSelectionMode(self.file_view.SingleSelection)
 
         # Metadata preview
         self.preview = QTextEdit()
